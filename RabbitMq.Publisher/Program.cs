@@ -12,16 +12,30 @@ public class Program
         using var channel = await connection.CreateChannelAsync();
         await channel.QueueDeclareAsync(queue: "hello-queue", durable: true, exclusive: false, autoDelete: false, arguments: null);
 
-        var message = "Hello World!";
-        var messageBody = Encoding.UTF8.GetBytes(message);
-        var properties = new BasicProperties();
+        Enumerable.Range(1,50).ToList().ForEach(i =>
+        {
+            var message = $"Message {i}";
+            var messageBody = Encoding.UTF8.GetBytes(message);
+            var properties = new BasicProperties();
+            channel.BasicPublishAsync(
+                        exchange: string.Empty,
+                        routingKey: "hello-queue",
+                        mandatory: false,
+                        basicProperties: properties,
+                        body: messageBody);
+            Console.WriteLine($"Mesaj {i} gönderildi! {message}");
+        });
 
-        await channel.BasicPublishAsync(
-                    exchange: string.Empty,
-                    routingKey: "hello-queue",
-                    mandatory: false,
-                    basicProperties: properties, 
-                    body: messageBody);
+        //var message = "Hello World!";
+        //var messageBody = Encoding.UTF8.GetBytes(message);
+        //var properties = new BasicProperties();
+
+        //await channel.BasicPublishAsync(
+        //            exchange: string.Empty,
+        //            routingKey: "hello-queue",
+        //            mandatory: false,
+        //            basicProperties: properties, 
+        //            body: messageBody);
 
         Console.WriteLine("Mesaj gönderildi!");
         Console.ReadLine();
