@@ -23,6 +23,7 @@ public class Program
         //await channel.ExchangeDeclareAsync("logs-fanout", durable: true, type: ExchangeType.Fanout);
         await channel.ExchangeDeclareAsync("logs-direct", durable: true, type: ExchangeType.Direct);
 
+
         foreach (var logLevel in Enum.GetNames(typeof(LogLevel)))
         {
             var routeKey = $"route-{logLevel}"; // ✅ tutarlı: hep lowercase
