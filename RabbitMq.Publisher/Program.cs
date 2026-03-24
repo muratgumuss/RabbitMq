@@ -21,33 +21,48 @@ public class Program
         //await channel.QueueDeclareAsync(queue: "hello-queue", durable: true, exclusive: false, autoDelete: false, arguments: null);
 
         //await channel.ExchangeDeclareAsync("logs-fanout", durable: true, type: ExchangeType.Fanout);
-        await channel.ExchangeDeclareAsync("logs-direct", durable: true, type: ExchangeType.Direct);
-
+        //await channel.ExchangeDeclareAsync("logs-direct", durable: true, type: ExchangeType.Direct);
+        await channel.ExchangeDeclareAsync("logs-topic", durable: true, type: ExchangeType.Topic);
 
         foreach (var logLevel in Enum.GetNames(typeof(LogLevel)))
         {
             var routeKey = $"route-{logLevel}"; // ✅ tutarlı: hep lowercase
             var queueName = $"direct-queue-{logLevel}";
             await channel.QueueDeclareAsync(queue: queueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
-            await channel.QueueBindAsync(queue: queueName, exchange: "logs-direct", routingKey: routeKey);
+            //await channel.QueueBindAsync(queue: queueName, exchange: "logs-direct", routingKey: routeKey);
+            await channel.QueueBindAsync(
+                    queue: queueName,
+                    exchange: "logs-topic",
+                    routingKey: $"*.{logLevel}.*");
         }
 
         foreach (var i in Enumerable.Range(1, 50))
         {
-            LogLevel loglevel = (LogLevel)new Random().Next(1, 5);
+            LogLevel loglevel1 = (LogLevel)new Random().Next(1, 5);
+            LogLevel loglevel2 = (LogLevel)new Random().Next(1, 5);
+            LogLevel loglevel3 = (LogLevel)new Random().Next(1, 5);
 
-            var message = $"log-type: {loglevel}";
+
+            var routeKey = $"{loglevel1}.{loglevel2}.{loglevel3}"; // ✅ tutarlı: hep lowercase
+            var message = $"log-type: {loglevel1}--{loglevel2}--{loglevel3}";
             var messageBody = Encoding.UTF8.GetBytes(message);
             var properties = new BasicProperties();
 
-            var routeKey = $"route-{loglevel.ToString()}"; // ✅ tutarlı: hep lowercase
+            //var routeKey = $"route-{loglevel.ToString()}"; // ✅ tutarlı: hep lowercase
 
             await channel.BasicPublishAsync(
-                exchange: "logs-direct",
-                routingKey: routeKey,
-                mandatory: false,
-                basicProperties: properties,
-                body: messageBody);
+                    exchange: "logs-topic",
+                    routingKey: routeKey,
+                    mandatory: false,
+                    basicProperties: properties,
+                    body: messageBody);
+
+            //await channel.BasicPublishAsync(
+            //    exchange: "logs-direct",
+            //    routingKey: routeKey,
+            //    mandatory: false,
+            //    basicProperties: properties,
+            //    body: messageBody);
 
             Console.WriteLine($"Log {i} gönderildi! {message}");
         }
