@@ -1,5 +1,7 @@
-﻿using RabbitMQ.Client;
+﻿using RabbitMq.Shared;
+using RabbitMQ.Client;
 using System.Text;
+using System.Text.Json;
 using static Program;
 
 public class Program
@@ -22,50 +24,68 @@ public class Program
 
         //await channel.ExchangeDeclareAsync("logs-fanout", durable: true, type: ExchangeType.Fanout);
         //await channel.ExchangeDeclareAsync("logs-direct", durable: true, type: ExchangeType.Direct);
-        await channel.ExchangeDeclareAsync("logs-topic", durable: true, type: ExchangeType.Topic);
+        //await channel.ExchangeDeclareAsync("logs-topic", durable: true, type: ExchangeType.Topic);
+        await channel.ExchangeDeclareAsync("header-exchange", durable: true, type: ExchangeType.Headers);
+        Dictionary<string, object> headers = new Dictionary<string, object>();
+        headers.Add("format", "pdf");
+        headers.Add("shape", "a4");
 
-        foreach (var logLevel in Enum.GetNames(typeof(LogLevel)))
-        {
-            var routeKey = $"route-{logLevel}"; // ✅ tutarlı: hep lowercase
-            var queueName = $"direct-queue-{logLevel}";
-            await channel.QueueDeclareAsync(queue: queueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
-            //await channel.QueueBindAsync(queue: queueName, exchange: "logs-direct", routingKey: routeKey);
-            await channel.QueueBindAsync(
-                    queue: queueName,
-                    exchange: "logs-topic",
-                    routingKey: $"*.{logLevel}.*");
-        }
+        var properties = new BasicProperties();
+        properties.Headers = headers;
+        properties.Persistent = true; // exchange kalıcı hale getiriyor, diğerlerinde de benzer şekilde
 
-        foreach (var i in Enumerable.Range(1, 50))
-        {
-            LogLevel loglevel1 = (LogLevel)new Random().Next(1, 5);
-            LogLevel loglevel2 = (LogLevel)new Random().Next(1, 5);
-            LogLevel loglevel3 = (LogLevel)new Random().Next(1, 5);
+        var product = new Product { Id = 1, Name = "Kalem", Price = 100, Stock = 50 };
+        var productJson = JsonSerializer.Serialize(product);
 
-
-            var routeKey = $"{loglevel1}.{loglevel2}.{loglevel3}"; // ✅ tutarlı: hep lowercase
-            var message = $"log-type: {loglevel1}--{loglevel2}--{loglevel3}";
-            var messageBody = Encoding.UTF8.GetBytes(message);
-            var properties = new BasicProperties();
-
-            //var routeKey = $"route-{loglevel.ToString()}"; // ✅ tutarlı: hep lowercase
-
-            await channel.BasicPublishAsync(
-                    exchange: "logs-topic",
-                    routingKey: routeKey,
+        await channel.BasicPublishAsync(
+                    exchange: "header-exchange",
+                    routingKey: string.Empty,
                     mandatory: false,
                     basicProperties: properties,
-                    body: messageBody);
+                    body: Encoding.UTF8.GetBytes(productJson));
 
-            //await channel.BasicPublishAsync(
-            //    exchange: "logs-direct",
-            //    routingKey: routeKey,
-            //    mandatory: false,
-            //    basicProperties: properties,
-            //    body: messageBody);
+        //foreach (var logLevel in Enum.GetNames(typeof(LogLevel)))
+        //{
+        //    var routeKey = $"route-{logLevel}"; // ✅ tutarlı: hep lowercase
+        //    var queueName = $"direct-queue-{logLevel}";
+        //    await channel.QueueDeclareAsync(queue: queueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
+        //    //await channel.QueueBindAsync(queue: queueName, exchange: "logs-direct", routingKey: routeKey);
+        //    //await channel.QueueBindAsync(
+        //    //        queue: queueName,
+        //    //        exchange: "logs-topic",
+        //    //        routingKey: $"*.{logLevel}.*");
+        //}
 
-            Console.WriteLine($"Log {i} gönderildi! {message}");
-        }
+        //foreach (var i in Enumerable.Range(1, 50))
+        //{
+        //    LogLevel loglevel1 = (LogLevel)new Random().Next(1, 5);
+        //    LogLevel loglevel2 = (LogLevel)new Random().Next(1, 5);
+        //    LogLevel loglevel3 = (LogLevel)new Random().Next(1, 5);
+
+
+        //    var routeKey = $"{loglevel1}.{loglevel2}.{loglevel3}"; // ✅ tutarlı: hep lowercase
+        //    var message = $"log-type: {loglevel1}--{loglevel2}--{loglevel3}";
+        //    var messageBody = Encoding.UTF8.GetBytes(message);
+        //    var properties = new BasicProperties();
+
+        //    //var routeKey = $"route-{loglevel.ToString()}"; // ✅ tutarlı: hep lowercase
+
+        //    await channel.BasicPublishAsync(
+        //            exchange: "logs-topic",
+        //            routingKey: routeKey,
+        //            mandatory: false,
+        //            basicProperties: properties,
+        //            body: messageBody);
+
+        //    //await channel.BasicPublishAsync(
+        //    //    exchange: "logs-direct",
+        //    //    routingKey: routeKey,
+        //    //    mandatory: false,
+        //    //    basicProperties: properties,
+        //    //    body: messageBody);
+
+        //    Console.WriteLine($"Log {i} gönderildi! {message}");
+        //}
 
 
         //var message = "Hello World!";
