@@ -1,6 +1,8 @@
-﻿using RabbitMQ.Client;
+﻿using RabbitMq.Shared;
+using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
+using System.Text.Json;
 
 public class Program
 {
@@ -23,16 +25,25 @@ public class Program
         await channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false); // Her seferinde sadece 1 mesaj alır
 
         var consumer = new AsyncEventingBasicConsumer(channel);
-        var queueName = "direct-queue-Error";
+        var queueName = "header-queue";
+        await channel.ExchangeDeclareAsync("header-exchange", durable: true, type: ExchangeType.Headers);
         //var routeKey = "*.Error.*";
         //await channel.QueueBindAsync(queue: queueName, exchange: "logs-topic", routingKey: routeKey);
+
+        Dictionary<string, object> headers = new Dictionary<string, object>();
+        headers.Add("format", "pdf");
+        headers.Add("shape", "a4");
+        headers.Add("x-match", "all"); // all: tüm header'lar eşleşmeli, any: herhangi biri eşleşmeli
+        await channel.QueueDeclareAsync(queue: queueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
+        await channel.QueueBindAsync(queue: queueName, exchange: "header-exchange", routingKey: string.Empty, arguments: headers);
 
         // Mesaj geldiğinde ne yapılacağını tanımlıyoruz
         consumer.ReceivedAsync += async (sender, eventArgs) =>
         {
             var messageBody = eventArgs.Body.ToArray();
             var message = Encoding.UTF8.GetString(messageBody);
-            Console.WriteLine($" [x] Gelen mesaj: {message}");
+            var product = JsonSerializer.Deserialize<Product>(message);
+            Console.WriteLine($" [x] Gelen mesaj: {product.Id} - {product.Name} - {product.Price} - {product.Stock}");
 
             // Mesajın işlendiğini onaylamak (Eğer autoAck: false ise)
             await channel.BasicAckAsync(eventArgs.DeliveryTag, false);
