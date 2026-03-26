@@ -1,14 +1,25 @@
 using Microsoft.EntityFrameworkCore;
+using RabbitMq.WatermarkApp.BackgroundServices;
 using RabbitMq.WatermarkApp.Models;
+using RabbitMq.WatermarkApp.Services;
+using RabbitMQ.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<AppDbContext>(options =>
-    {
-        options.UseInMemoryDatabase("ProductsDb");
-    });
+{
+    options.UseInMemoryDatabase("ProductsDb");
+});
+
+builder.Services.AddSingleton(sp => new ConnectionFactory()
+{
+    Uri = new Uri(builder.Configuration.GetConnectionString("RabbitMq"))
+});
+builder.Services.AddSingleton<RabbitMQClientService>();
+builder.Services.AddSingleton<RabbitMQPublisher>();
+builder.Services.AddHostedService<ImageWatermarkProcessBackgroundService>();
 
 var app = builder.Build();
 
