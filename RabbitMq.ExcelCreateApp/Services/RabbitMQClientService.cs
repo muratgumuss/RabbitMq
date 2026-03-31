@@ -1,16 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata;
 using RabbitMQ.Client;
 
-namespace RabbitMq.WatermarkApp.Services
+namespace RabbitMq.ExcelCreateApp.Services
 {
     public class RabbitMQClientService : IDisposable
     {
         private readonly ConnectionFactory _connectionFactory;
         private IConnection _connection;
         private IChannel _channel;
-        public static string ExchangeName = "ImageDirectExchange";
-        public static string RoutingWatermark = "watermark-route-image";
-        public static string QueueName = "queue-watermark-image";
+        public static string ExchangeName = "ExcelDirectExchange";
+        public static string RoutingExcel = "excel-route-file";
+        public static string QueueName = "queue-excel-file";
 
         private readonly ILogger<RabbitMQClientService> _logger;
 
@@ -20,6 +20,7 @@ namespace RabbitMq.WatermarkApp.Services
             _logger = logger;
 
         }
+
         public async Task<IChannel> Connect()
         {
             _connection = await _connectionFactory.CreateConnectionAsync();
@@ -33,12 +34,11 @@ namespace RabbitMq.WatermarkApp.Services
 
             await _channel.ExchangeDeclareAsync(ExchangeName, type: "direct", true, false);
             await _channel.QueueDeclareAsync(QueueName, true, false, false, null);
-            await _channel.QueueBindAsync(exchange: ExchangeName, queue: QueueName, routingKey: RoutingWatermark);
+            await _channel.QueueBindAsync(exchange: ExchangeName, queue: QueueName, routingKey: RoutingExcel);
 
             _logger.LogInformation("RabbitMQ ile bağlantı kuruldu...");
 
             return _channel;
-
         }
 
         public async void Dispose()
