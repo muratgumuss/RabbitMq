@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="RabbitMq.ExcelCreateApp/RabbitMq.ExcelCreateApp.csproj" Id="e6be92b5-3814-445d-b08c-b66ed684051e" />
+  <Project Path="RabbitMq.FileCreateWorkerService/RabbitMq.FileCreateWorkerService.csproj" Id="8c49a10e-0fbc-4e06-966c-855860137c63" />
   <Project Path="RabbitMq.Publisher/RabbitMq.Publisher.csproj" />
   <Project Path="RabbitMq.Shared/RabbitMq.Shared.csproj" Id="0da4390e-a7c9-4a5b-b247-2caf4adcd28b" />
   <Project Path="RabbitMq.Subscriber/RabbitMq.Subscriber.csproj" />
