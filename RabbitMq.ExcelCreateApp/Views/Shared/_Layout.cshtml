@@ -29,6 +29,10 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
                         </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Files">Files</a>
+                        </li>
                         @if (!Context.User.Identity.IsAuthenticated)
                         {
                             <li class="nav-item">
@@ -58,6 +62,48 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/9.0.6/signalr.min.js" integrity="sha512-kkMt8UThSmWcdXLYFaGZ/U6vyWSNLZMUWQ5SMeF80pGqrEkH5ei9D/3MbVQpB8p7D5C3A4vlX7BpsWTT2BfB6A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+            $(document).ready(function () {
+
+                var connection = new signalR.HubConnectionBuilder().withUrl("/MyHub").build();
+
+                start();
+                function start() {
+
+                connection.start().then().catch((err) => {
+
+                console.log(err);
+                setTimeout(() => start(), 2000);
+                })
+
+
+                }
+
+                connection.on("CompletedFile", () => {
+
+
+                console.log("excel oluşturma bitti");
+
+                Swal.fire({
+                position: 'top-end',
+                icon: 'success',
+                title: 'Excel dosyanız hazır',
+                showConfirmButton: true,
+                confirmButtonText:"Dosyalarım"
+                    
+                }).then((result) => {
+                if (result.isConfirmed) {
+
+                window.location = "/product/files";
+                }
+
+                })
+
+                });
+            })
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
