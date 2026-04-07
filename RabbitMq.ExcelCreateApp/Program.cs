@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using RabbitMq.ExcelCreateApp.Hubs;
 using RabbitMq.ExcelCreateApp.Models;
 using RabbitMq.ExcelCreateApp.Services;
 using RabbitMQ.Client;
@@ -20,8 +21,10 @@ builder.Services.AddSingleton(sp => new ConnectionFactory()
 });
 builder.Services.AddSingleton<RabbitMQClientService>();
 builder.Services.AddSingleton<RabbitMQPublisher>();
+builder.Services.AddSignalR();
 
 var app = builder.Build();
+app.MapHub<MyHub>("/myhub");
 
 using (var scope = app.Services.CreateScope())
 {
